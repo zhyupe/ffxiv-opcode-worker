@@ -30,7 +30,7 @@ EventPlay4,,Wizard#29,ServerZoneIpc,,,,,,,0x0214,0x02C1,0x02FF
 UpdateInventorySlot,,Wizard#30,ServerZoneIpc,,,,,,,0x013C,0x01A7,0x00A4
 InventoryTransaction,48,Wizard#31,ServerZoneIpc,,,,,,,0x0202,0x028B,0x020A
 CFPreferredRole,,Wizard#32,ServerZoneIpc,,,,,,,0x00A4,0x0256,0x013E
-CFNotify,,Wizard#33,ServerZoneIpc,,,,,0x0265,0x0377,0x016D,0x021C,0x00FD
+ContentFinderNotifyPop,,Wizard#33,ServerZoneIpc,,,CFNotify,,0x0265,0x0377,0x016D,0x021C,0x00FD
 ActorSetPos,,Wizard#34,ServerZoneIpc,ActorSetPos,,,,,,0x0261,0x0067,0x00D5
 ActorCast,,Wizard#35,ServerZoneIpc,ActorCast,,,,,,0x032C,0x008C,0x029D
 Effect,,Wizard#36,ServerZoneIpc,Ability1,,,,,,0x023E,0x00D5,0x00EB

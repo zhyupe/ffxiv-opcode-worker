@@ -1,8 +1,8 @@
 name: Build
 on: [push]
-  # push:
-  #   tags: 
-  #     - machina-wrapper-json/*
+  push:
+    tags: 
+      - machina-wrapper-json/*
 
 env:
   version: 5.2
@@ -44,7 +44,7 @@ jobs:
         path: machina-wrapper-json
         commit-message: "feat(ipc): update for cn patch-${{ env.version }}"
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        # request-to-parent: true
+        request-to-parent: true
         branch: ci/zh/opcode-patch-${{ env.version }}
         base: master
         title: "feat(ipc): update for cn patch-${{ env.version }}"
