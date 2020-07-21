@@ -1,0 +1,27 @@
+{
+  "name": "ffxiv-opcode-worker",
+  "version": "1.0.0",
+  "description": "This repository contains workflows that generate opcode files for different purposes",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "fs-extra": "^9.0.1",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhyupe/ffxiv-opcode-worker.git"
+  },
+  "author": "",
+  "license": "AGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/zhyupe/ffxiv-opcode-worker/issues"
+  },
+  "homepage": "https://github.com/zhyupe/ffxiv-opcode-worker#readme"
+}
