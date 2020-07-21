@@ -19,7 +19,7 @@ jobs:
         path: repo
 
     - name: Clone MachinaWrapperJSON
-      run: git clone --branch staging https://github.com/${target_repo}.git machina-wrapper-json
+      run: git clone https://github.com/${target_repo}.git machina-wrapper-json
       
     - name: Check node version
       run: node -v
