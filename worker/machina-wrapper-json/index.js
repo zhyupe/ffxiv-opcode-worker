@@ -28,7 +28,7 @@ for (let { Name: name, Scope: scope, TeamCraft: altname, [version]: opcode } of 
 const scopes = ['ServerZoneIpc', 'ClientZoneIpc', 'ServerChatIpc', 'ClientChatIpc']
 const tab = `    `
 
-const outputFile = join(workspace, 'MachinaWrapper/src/Models/Sapphire/Ipcs_cn.cs')
+const outputFile = join(workspace, 'MachinaWrapper/Models/Sapphire/Ipcs_cn.cs')
 const outputPath = dirname(outputFile)
 
 fs.mkdirpSync(outputPath)
