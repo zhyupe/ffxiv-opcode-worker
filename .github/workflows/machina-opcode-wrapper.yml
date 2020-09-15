@@ -5,7 +5,7 @@ on:
       - machina-wrapper-json/*
 
 env:
-  version: 5.21
+  version: 5.25
   target_repo: karashiiro/MachinaWrapperJSON
   target_fork: zhyupe/MachinaWrapperJSON
 
