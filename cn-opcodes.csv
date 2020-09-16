@@ -61,7 +61,7 @@ FellowshipList,800,,,,,,,,,,,,0x02e5,0x032c
 FellowshipListQuery,8,,,,,,,,,,,,,0x00d9
 FellowshipMember,480,,,,,,,,,,,,0x0335,0x00d0
 FellowshipMemberQuery,24,,,,,,,,,,,,0x031f,0x0218
-FellowshipMemberSetGroupHandler,,,,,,,,,,,,,0x021e,
+FellowshipMemberSetGroupHandler,,,,,,,,,,,,,0x021e,0x01d2
 FellowshipMessageBoard,1536,,,,,,,,,,,,0x02e5,0x036d
 FellowshipMessageBoardQuery,16,,,,,,,,,,,,0x02ab,0x03b2
 CompanyAirshipStatus,36,,,,,,,,,,,,0x0168,0x01ae
