@@ -5,7 +5,7 @@ on:
       - machina-wrapper-json/*
 
 env:
-  version: 5.3
+  version: 5.301
   target_repo: karashiiro/MachinaWrapperJSON
   target_fork: zhyupe/MachinaWrapperJSON
 
@@ -38,13 +38,13 @@ jobs:
         git remote set-url origin https://github.com/${target_fork}
         
     - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v2
+      uses: peter-evans/create-pull-request@v3
       with:
         token: ${{ secrets.WORKER_ACCESS_KEY }}
         path: machina-wrapper-json
         commit-message: "feat(ipc): update for cn patch-${{ env.version }}"
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        request-to-parent: true
+        push-to-fork: ${{ env.target_repo }}
         branch: ci/zh/opcode-patch-${{ env.version }}
         base: master
         title: "feat(ipc): update for cn patch-${{ env.version }}"
