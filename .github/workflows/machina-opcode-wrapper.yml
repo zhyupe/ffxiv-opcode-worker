@@ -44,7 +44,7 @@ jobs:
         path: machina-wrapper-json
         commit-message: "feat(ipc): update for cn patch-${{ env.version }}"
         author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
-        push-to-fork: ${{ env.target_repo }}
+        push-to-fork: ${{ env.target_fork }}
         branch: ci/zh/opcode-patch-${{ env.version }}
         base: master
         title: "feat(ipc): update for cn patch-${{ env.version }}"
