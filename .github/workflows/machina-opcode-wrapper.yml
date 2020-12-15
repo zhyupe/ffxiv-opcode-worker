@@ -31,6 +31,11 @@ jobs:
       
     - name: Run data generator
       run: node repo/worker/machina-wrapper-json machina-wrapper-json ${{ env.version }}
+      
+    - name: Setting fork as origin
+      run: |
+        cd machina-wrapper-json
+        git remote set-url origin https://github.com/${target_repo}
         
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
