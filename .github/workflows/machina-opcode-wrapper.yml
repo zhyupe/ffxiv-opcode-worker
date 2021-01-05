@@ -5,7 +5,7 @@ on:
       - machina-wrapper-json/*
 
 env:
-  version: 5.301
+  version: 5.31
   target_repo: karashiiro/MachinaWrapperJSON
   target_fork: zhyupe/MachinaWrapperJSON
 
@@ -32,7 +32,7 @@ jobs:
     - name: Run data generator
       run: node repo/worker/machina-wrapper-json machina-wrapper-json ${{ env.version }}
       
-    - name: Setting fork as origin
+    - name: Setting origin
       run: |
         cd machina-wrapper-json
         git remote set-url origin https://github.com/${target_repo}
