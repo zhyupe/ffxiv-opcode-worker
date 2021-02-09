@@ -6,8 +6,8 @@ on:
 
 env:
   version: 5.31
-  target_repo: karashiiro/MachinaWrapperJSON
-  target_fork: zhyupe/MachinaWrapperJSON
+  target_repo: karashiiro/FFXIVOpcodes
+  target_fork: zhyupe/FFXIVOpcodes
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
       with:
         path: repo
 
-    - name: Clone MachinaWrapperJSON
+    - name: Clone FFXIVOpcodes
       run: git clone https://github.com/${target_repo}.git machina-wrapper-json
       
     - name: Check node version
