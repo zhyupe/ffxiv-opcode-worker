@@ -35,7 +35,7 @@ FellowshipList,800,Wireshark,,,,,,,,,,,0x02e5,0x032c,,,,
 FellowshipListQuery,8,Wireshark,,,,,,,,,,,,0x00d9,,,,
 FellowshipMember,480,Wireshark,,,,,,,,,,,0x0335,0x00d0,,,,
 FellowshipMemberQuery,24,Wireshark,,,,,,,,,,,0x031f,0x0218,,,,
-FellowshipMemberSetGroupHandler,,Wireshark,,,,,,,,,,,0x021e,,,,,
+FellowshipMemberSetGroupHandler,,Wireshark,,,,,,,,,,,0x021e,0x01d2,,,,
 FellowshipMessageBoard,1536,Wireshark,,,,,,,,,,,0x02e5,0x036d,,,,
 FellowshipMessageBoardQuery,16,Wireshark,,,,,,,,,,,0x02ab,0x03b2,,,,
 GroupMessage,,Wireshark,ServerZoneIpc,,,!,0x0065,0x0065,0x0065,0x0065,,0x0072,0x0065,0x0065,0x0065,0x0065,0x0065,0x0065
