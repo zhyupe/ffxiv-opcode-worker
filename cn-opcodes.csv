@@ -86,3 +86,8 @@ FreeCompanyInfo,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x03A2,0x03D4,0x01E8
 AirshipExplorationResult,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x02C1,0x006B,0x00A5
 SubmarineExplorationResult,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x007F,0x00D8,0x03D3
 FreeCompanyDialog,,,ServerZoneIpc,,,,,,,,,,,,,,,,,,0x03A5,0x0086
+CraftStatus,160,,ServerZoneIpc,,,,,,,,,,,,,,,,,,0x020D,0x026C
+EventStart,0x18,,ClientZoneIpc,,,,,,,,,,,,,,,,,,0x3c3,0x2D5
+EventFinish,16,,ClientZoneIpc,,,,,,,,,,,,,,,,,,0x20B,0x110
+EventAction,16,,ClientZoneIpc,,,,,,,,,,,,,,,,,,0x39d,0x105
+ActionSend,32,,ClientZoneIpc,,,,,,,,,,,,,,,,,,0x34c,0x2E0
