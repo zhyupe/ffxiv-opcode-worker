@@ -64,7 +64,7 @@ ${tab}static class CN
 ${tab}{
 ${tab}${tab}public static Dictionary<string, object> Constants = new Dictionary<string, object>
 ${tab}${tab}{
-${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x00E0 },
+${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x01B8 },
 ${tab}${tab}};
 ${tab}}
 }
