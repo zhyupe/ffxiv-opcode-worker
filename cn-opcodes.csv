@@ -86,3 +86,4 @@ FreeCompanyInfo,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x03A2,0x03D4,0x01E8
 AirshipExplorationResult,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x02C1,0x006B,0x00A5
 SubmarineExplorationResult,,,ServerZoneIpc,,,,,,,,,,,,,,,,,0x007F,0x00D8,0x03D3
 FreeCompanyDialog,,,ServerZoneIpc,,,,,,,,,,,,,,,,,,0x03A5,0x0086
+ItemMarketBoardInfo,,Wizard#Verified,ServerZoneIpc,,,,,,,,,,,,,,,,,,,0x0236
