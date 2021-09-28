@@ -66,7 +66,7 @@ ${tab}${tab}public const string Version = "${version}";
 
 ${tab}${tab}public static Dictionary<string, object> Constants = new Dictionary<string, object>
 ${tab}${tab}{
-${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x01B8 },
+${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x03A1 },
 ${tab}${tab}};
 ${tab}}
 }
