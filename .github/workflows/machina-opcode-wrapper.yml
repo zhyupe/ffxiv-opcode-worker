@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     tags: 
-      - machina-wrapper-json/*
+      - tc/*
 
 env:
   version: 5.55
