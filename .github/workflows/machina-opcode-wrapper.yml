@@ -5,7 +5,7 @@ on:
       - tc/*
 
 env:
-  version: 5.55
+  version: 5.57
   target_repo: karashiiro/FFXIVOpcodes
   target_fork: zhyupe/FFXIVOpcodes
 
