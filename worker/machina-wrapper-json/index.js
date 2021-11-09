@@ -23,9 +23,11 @@ for (let { Name: name, Scope: scope, TeamCraft: altname, [version]: opcode } of 
     continue
   }
 
-  if (existsOpcode.has(opcode)) {
+  const opcodeValue = parseInt(opcode)
+  if (existsOpcode.has(`${scope}:${opcodeValue}`)) {
     throw new Error(`Detected duplicate opcode ${opcode}`)
   }
+  existsOpcode.add(`${scope}:${opcodeValue}`)
 
   output[scope].push({
     name: altname || name,
@@ -66,7 +68,7 @@ ${tab}${tab}public const string Version = "${version}";
 
 ${tab}${tab}public static Dictionary<string, object> Constants = new Dictionary<string, object>
 ${tab}${tab}{
-${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x03A1 },
+${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x01DC },
 ${tab}${tab}};
 ${tab}}
 }
