@@ -30,7 +30,7 @@ jobs:
         npm i
       
     - name: Run data generator
-      run: node repo/worker/machina-wrapper-json machina-wrapper-json ${{ env.version }}
+      run: node repo/worker/machina-wrapper-json/index.mjs machina-wrapper-json ${{ env.version }}
       
     - name: Setting origin
       run: |
