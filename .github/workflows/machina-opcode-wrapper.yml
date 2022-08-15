@@ -11,7 +11,7 @@ on:
         default: '6.01a'
 
 env:
-  version: ${{ github.event.inputs.version || "6.1" }}
+  version: ${{ github.event.inputs.version || '6.1' }}
   target_repo: karashiiro/FFXIVOpcodes
   target_fork: zhyupe/FFXIVOpcodes
 
