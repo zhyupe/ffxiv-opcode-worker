@@ -1,4 +1,4 @@
-name: Build
+name: FFXIVOpcodes (TC)
 on:
   push:
     tags: 
