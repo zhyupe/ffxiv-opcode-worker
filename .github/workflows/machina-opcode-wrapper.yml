@@ -3,9 +3,15 @@ on:
   push:
     tags: 
       - tc/*
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '游戏版本号(x.xx)'     
+        required: true
+        default: '6.01a'
 
 env:
-  version: "6.1"
+  version: ${{ github.event.inputs.version || "6.1" }}
   target_repo: karashiiro/FFXIVOpcodes
   target_fork: zhyupe/FFXIVOpcodes
 
