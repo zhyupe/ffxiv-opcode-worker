@@ -1,0 +1,28 @@
+name: Cafe.Matcha
+
+on:
+  workflow_dispatch:
+  
+env:
+  target_repo: thewakingsands/matcha
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with: 
+        repository: ${target_repo}
+        token: ${{ secrets.WORKER_ACCESS_KEY }}
+
+    - name: Install node-fetch and csv-parse
+      run: npm i node-fetch@3 csv-parse@5
+
+    - name: Download opcode file
+      run: node utils/update-opcode.mjs
+
+    - name: Add & Commit
+      uses: EndBug/add-and-commit@v9.0.1
+      with:
+        add: Cafe.Matcha
