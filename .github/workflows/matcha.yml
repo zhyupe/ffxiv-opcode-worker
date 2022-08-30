@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with: 
-        repository: ${target_repo}
+        repository: ${{ env.target_repo }}
         token: ${{ secrets.WORKER_ACCESS_KEY }}
 
     - name: Install node-fetch and csv-parse
