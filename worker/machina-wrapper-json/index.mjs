@@ -7,7 +7,12 @@ import { parseOpcode, formatOpcode } from '../../lib/opcode.mjs'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 const workspace = process.argv[2]
-const version = process.argv[3]
+let version = process.argv[3]
+if (/^\d\.\d$/.test(version)) {
+  version += '0'
+}
+
+const csvVersion = version.replace(/0+$/, '')
 
 const text = fs.readFileSync(join(__dirname, '../../cn-opcodes.csv'), 'utf-8')
 const table = readCsv(text, null, { header: 0, skip: 1 })
