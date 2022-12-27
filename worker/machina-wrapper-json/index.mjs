@@ -21,7 +21,7 @@ const output = {}
 const existsOpcode = new Set()
 const specialValues = {}
 
-for (let { Name: name, Scope: scope, TeamCraft: altname, [version]: opcode } of table) {
+for (let { Name: name, Scope: scope, TeamCraft: altname, [csvVersion]: opcode } of table) {
   if (!name || !opcode) {
     continue
   }
