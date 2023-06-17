@@ -14,4 +14,4 @@ jobs:
         run: wget -O cn-opcodes.csv -q ${{ secrets.OPCODE_SHEET_URL }}
 
       - name: Add & Commit
-        uses: EndBug/add-and-commit@v9.0.1
+        uses: EndBug/add-and-commit@v9.1.3
