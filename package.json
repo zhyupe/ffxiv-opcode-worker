@@ -22,5 +22,6 @@
   "bugs": {
     "url": "https://github.com/zhyupe/ffxiv-opcode-worker/issues"
   },
-  "homepage": "https://github.com/zhyupe/ffxiv-opcode-worker#readme"
+  "homepage": "https://github.com/zhyupe/ffxiv-opcode-worker#readme",
+  "packageManager": "yarn@4.1.1"
 }
