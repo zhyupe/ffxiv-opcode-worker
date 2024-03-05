@@ -38,7 +38,9 @@ jobs:
           yarn
 
       - name: Run data generator
-        run: yarn node repo/worker/machina-wrapper-json/index.mjs machina-wrapper-json ${{ env.version }}
+        run: |
+          cd repo
+          yarn node worker/machina-wrapper-json/index.mjs ../machina-wrapper-json ${{ env.version }}
 
       - name: Setting origin
         run: |
