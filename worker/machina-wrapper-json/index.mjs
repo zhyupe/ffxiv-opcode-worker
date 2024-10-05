@@ -12,7 +12,8 @@ if (/^\d\.\d$/.test(version)) {
   version += '0'
 }
 
-const csvVersion = version.replace(/0+$/, '')
+const csvVersion = version.replace(/(\d)0+$/, '$1')
+console.log({ version, csvVersion })
 
 const text = readFileSync(join(__dirname, '../../cn-opcodes.csv'), 'utf-8')
 const table = readCsv(text, null, { header: 0, skip: 1 })
@@ -20,6 +21,8 @@ const table = readCsv(text, null, { header: 0, skip: 1 })
 const output = {}
 const existsOpcode = new Set()
 const specialValues = {}
+
+let count = 0
 
 for (let {
   Name: name,
@@ -50,6 +53,13 @@ for (let {
     name: altname || name,
     opcode,
   })
+  ++count
+}
+
+console.log('Found %d opcode(s)', count)
+if (count === 0) {
+  console.error('No opcode found! The version may be incorrect')
+  process.exit(1)
 }
 
 const scopes = [
