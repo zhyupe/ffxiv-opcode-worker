@@ -118,4 +118,4 @@ WorldVisitQueue,16,,,ServerZoneIpc,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 MapEffect4,,,,ServerZoneIpc,,,,MapEffect4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0x0165,0x00E1,0x020A,0x025C
 MapEffect8,,,,ServerZoneIpc,,,,MapEffect8,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0x02FE,0x0315,0x00CA,0x0239
 MapEffect12,,,,ServerZoneIpc,,,,MapEffect12,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0x0123,0x0362,0x010D,0x0109
-StatusEffectListForay3,,,,ServerZoneIpc,StatusEffectListForay3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+StatusEffectListForay3,,,,ServerZoneIpc,StatusEffectListForay3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0x00F7
