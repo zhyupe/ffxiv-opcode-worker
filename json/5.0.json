@@ -1,0 +1,11 @@
+{
+  "ActorControl": "0x0142",
+  "ActorControlSelf": "0x0143",
+  "ActorControlTarget": "0x024d",
+  "ActorGauge": "0x016d",
+  "ClientTrigger": "0x013a",
+  "GroupMessage": "0x0065",
+  "InventoryActionAck": "0x01A7",
+  "InventoryTransactionFinish": "0x01A3",
+  "PublicMessage": "0x0104"
+}

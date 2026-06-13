@@ -1,0 +1,12 @@
+{
+  "ActorControl": "0x00c1",
+  "ActorControlSelf": "0x011f",
+  "ActorControlTarget": "0x010b",
+  "ActorGauge": "0x026c",
+  "ClientTrigger": "0x01de",
+  "ContentFinderNotifyPop": "0x0377",
+  "EventPlay": "0x00fa",
+  "GroupMessage": "0x0065",
+  "PublicMessage": "0x00bb",
+  "RetainerInformation": "0x02f0"
+}

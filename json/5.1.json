@@ -1,0 +1,11 @@
+{
+  "ActorControl": "0x00de",
+  "ActorControlSelf": "0x01c3",
+  "ActorControlTarget": "0x03ac",
+  "ActorGauge": "0x0382",
+  "ClientTrigger": "0x0315",
+  "ContentFinderNotifyPop": "0x0265",
+  "GroupMessage": "0x0065",
+  "InventoryTransactionFinish": "0x0318",
+  "PublicMessage": "0x03c0"
+}
