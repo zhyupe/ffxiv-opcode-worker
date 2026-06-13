@@ -19,6 +19,11 @@ const latestVersion = versions.at(-1)
 rmSync(outputDir, { recursive: true, force: true })
 mkdirSync(outputDir, { recursive: true })
 
+writeFileSync(
+  join(outputDir, 'version.json'),
+  `${JSON.stringify(versions, null, 2)}\n`
+)
+
 let latestOpcodes
 
 for (const version of versions) {
@@ -47,5 +52,5 @@ if (latestOpcodes) {
 }
 
 console.log(
-  `Wrote ${versions.length} opcode JSON file(s) and current.json to ${outputDir}`
+  `Wrote ${versions.length} opcode JSON file(s), current.json, and version.json to ${outputDir}`
 )
