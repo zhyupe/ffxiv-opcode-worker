@@ -15,15 +15,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
-        run: |
-          corepack enable
-          yarn install --immutable
+        run: npm ci
 
       - name: Convert CSV to JSON
-        run: yarn json
+        run: npm run json
 
       - name: Add & Commit
         uses: EndBug/add-and-commit@v9.1.3

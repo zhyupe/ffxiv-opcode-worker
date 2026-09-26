@@ -11,7 +11,8 @@
   },
   "scripts": {
     "json": "node worker/csv-json/index.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "json:merge-history": "node worker/csv-json/merge-history.mjs",
+    "test": "node --test"
   },
   "repository": {
     "type": "git",
@@ -22,10 +23,5 @@
   "bugs": {
     "url": "https://github.com/zhyupe/ffxiv-opcode-worker/issues"
   },
-  "homepage": "https://github.com/zhyupe/ffxiv-opcode-worker#readme",
-  "packageManager": "yarn@4.1.1",
-  "prettier": {
-    "singleQuote": true,
-    "semi": false
-  }
+  "homepage": "https://github.com/zhyupe/ffxiv-opcode-worker#readme"
 }

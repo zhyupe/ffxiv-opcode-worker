@@ -1,8 +1,8 @@
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { readCsv } from '../../lib/csv.mjs'
-import { parseOpcode, formatOpcode } from '../../lib/opcode.mjs'
-import { mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { formatOpcode, parseOpcode } from '../../lib/opcode.mjs'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -24,7 +24,7 @@ const specialValues = {}
 
 let count = 0
 
-for (let {
+for (const {
   Name: name,
   Scope: scope,
   TeamCraft: altname,
@@ -85,18 +85,18 @@ writeFileSync(
 namespace FFXIVOpcodes.CN
 {
 ${scopes
-    .map(
-      (key) => `${tab}public enum ${key}Type : ushort
+  .map(
+    (key) => `${tab}public enum ${key}Type : ushort
 ${tab}{
 ${(output[key] || [])
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map(({ name, opcode }) => `${tab}${tab}${name} = ${opcode},`)
-          .join('\n')}
-${tab}};`
-    )
-    .join('\n\n')}
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map(({ name, opcode }) => `${tab}${tab}${name} = ${opcode},`)
+  .join('\n')}
+${tab}};`,
+  )
+  .join('\n\n')}
 }
-`
+`,
 )
 
 const offset = parseOpcode(specialValues.InventoryHandlerOffset) + 7
@@ -122,5 +122,5 @@ ${tab}${tab}${tab}{ "InventoryOperationBaseValue", 0x${formatOpcode(offset)} },
 ${tab}${tab}};
 ${tab}}
 }
-`
+`,
 )
