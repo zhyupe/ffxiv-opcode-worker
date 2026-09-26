@@ -7,7 +7,7 @@
     "lib": "lib"
   },
   "dependencies": {
-    "csv-parse": "^5.3.0"
+    "csv-parse": "^7.0.2"
   },
   "scripts": {
     "json": "node worker/csv-json/index.mjs",
