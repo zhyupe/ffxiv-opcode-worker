@@ -58,9 +58,11 @@ CSV entries are omitted, so consumers leave their direction unspecified.
 Only `FFXIVOpcodes` aliases participate in opcode merging. Incoming names are
 translated before comparison and only project names are written for mapped
 packets. Names without a mapping retain their spelling. Metadata stays in YAML;
-the opcode JSON format remains unchanged. Use `--packets <path>` to load another
+the opcode JSON format remains unchanged. Direction is read directly from YAML;
+it is not inferred from the category name. Categories are defined by the YAML
+file and are not restricted to a built-in list. Use `--packets <path>` to load another
 catalog; the default path is relative to the project. Missing or invalid catalogs,
-duplicate YAML keys, inconsistent category directions, duplicate packet names
+duplicate YAML keys, invalid direction values, duplicate packet names
 across categories, and ambiguous aliases abort without writing output. Packet
 names must be unique across categories because the output JSON uses a flat map.
 

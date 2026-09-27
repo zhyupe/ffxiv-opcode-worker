@@ -583,12 +583,13 @@ test('invalid, ambiguous, or missing name mappings abort before output changes',
   )
 })
 
-test('all six IPC categories expose direction and allow packets without aliases', () => {
-  for (const category of ['ServerZoneIpc', 'ClientZoneIpc', 'ServerLobbyIpc', 'ClientLobbyIpc', 'ServerChatIpc', 'ClientChatIpc']) {
-    const direction = category.startsWith('Server') ? 'server-to-client' : 'client-to-server'
-    const { aliases, packets } = parsePackets(JSON.stringify({ [category]: { direction, packets: { KnownPacket: {} } } }))
-    assert.deepEqual(packets.get('KnownPacket'), { category, direction, names: {} })
-    assert.equal(aliases.size, 0)
+test('packet direction comes from YAML independently of the IPC category', () => {
+  for (const category of ['ServerZoneIpc', 'ClientZoneIpc', 'ServerLobbyIpc', 'ClientLobbyIpc', 'ServerChatIpc', 'ClientChatIpc', 'CustomIpc']) {
+    for (const direction of ['server-to-client', 'client-to-server']) {
+      const { aliases, packets } = parsePackets(JSON.stringify({ [category]: { direction, packets: { KnownPacket: {} } } }))
+      assert.deepEqual(packets.get('KnownPacket'), { category, direction, names: {} })
+      assert.equal(aliases.size, 0)
+    }
   }
 })
 
@@ -596,9 +597,11 @@ test('invalid category metadata and cross-category name collisions are rejected'
   const server = { direction: 'server-to-client', packets: { First: { FFXIVOpcodes: 'Alias' } } }
   const client = { direction: 'client-to-server', packets: { Second: {} } }
   for (const input of [
-    { UnknownIpc: server },
-    { ServerZoneIpc: { ...server, direction: 'client-to-server' } },
-    { ClientZoneIpc: { ...client, direction: 'server-to-client' } },
+    { '': server },
+    { '   ': server },
+    { CustomIpc: null },
+    { CustomIpc: [] },
+    ...[undefined, null, '', 'outgoing', true, 0, [], {}].map(direction => ({ ServerZoneIpc: { ...server, direction } })),
     { ServerZoneIpc: { packets: {} } },
     { ServerZoneIpc: { direction: 'server-to-client', packets: [] } },
     { ServerZoneIpc: server, ClientZoneIpc: { ...client, packets: { First: {} } } },
