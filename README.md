@@ -28,7 +28,17 @@ with the **Global** entry from
 [FFXIVOpcodes/opcodes.json](https://github.com/karashiiro/FFXIVOpcodes/blob/master/opcodes.json).
 Use `--region CN` to select another region.
 
-Opcodes are compared numerically; hexadecimal case and padding do not matter.
+Both generation and historical backfill load the repository's `names.yaml` at
+runtime. Its top-level keys are project packet names; `FFXIVOpcodes` values are
+the corresponding upstream names. Incoming names are translated before comparison
+and only project names are written for mapped packets. ACT and Cactbot fields
+are not used for this merge. Names without a mapping retain their spelling.
+Use `--names <path>` to load a different mapping file; the default is resolved
+relative to the project rather than the working directory. Missing or invalid
+mapping files, duplicate YAML keys, and ambiguous upstream aliases abort without
+writing output.
+
+Opcodes are compared numerically after name mapping; hexadecimal case and padding do not matter.
 The entire upstream merge is rejected when **50% or more** of the distinct
 overlapping names conflict (conflicting names divided by overlapping names).
 Below that threshold, new names are added and existing local values win every
@@ -38,10 +48,12 @@ duplicate names across upstream lists), or a download failure also skips the
 merge with a warning. Version labels need not match. New values use `0x`
 followed by four uppercase hexadecimal digits.
 
-Existing per-version JSON entries are retained, including previously merged
-entries in historical versions. CSV values take precedence for names present in
-the CSV. Only the latest version fetches upstream data; `current.json` mirrors
-that version. The output directory is no longer deleted before generation.
+Existing per-version JSON entries are retained and their known upstream aliases
+are normalized, including entries in historical versions. Where both names
+already exist, the project-name value wins. CSV values then take precedence,
+including when a CSV name itself needs mapping. Only the latest version fetches
+upstream data; `current.json` mirrors that version. Alias cleanup still happens
+when the upstream merge is skipped. The output directory is not deleted.
 
 ## Backfill a historical version
 

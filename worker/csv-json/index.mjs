@@ -9,6 +9,7 @@ import {
   serializeOpcodes,
   validateOpcodes,
 } from '../../lib/ffxiv-opcodes.mjs'
+import { loadNames, normalizeOpcodeNames } from '../../lib/names.mjs'
 
 export const versionPattern = /^\d+\.\d+(?:[a-z])?$/
 
@@ -25,9 +26,11 @@ export async function generateJson({
   inputFile = 'cn-opcodes.csv',
   outputDir = 'json',
   region = 'Global',
+  namesFile,
   loadUpstream = fetchOpcodes,
   logger = console,
 } = {}) {
+  const names = loadNames(namesFile)
   const rows = parse(readFileSync(inputFile, 'utf-8'), {
     columns: true,
     skip_empty_lines: true,
@@ -48,8 +51,11 @@ export async function generateJson({
     // Keep previously merged entries, including when the former current version
     // becomes historical. CSV remains authoritative for names it provides.
     output.set(version, {
-      ...readOpcodes(join(outputDir, `${version}.json`)),
-      ...csvOpcodes,
+      ...normalizeOpcodeNames(
+        readOpcodes(join(outputDir, `${version}.json`)),
+        names,
+      ),
+      ...normalizeOpcodeNames(csvOpcodes, names),
     })
   }
 
@@ -58,6 +64,7 @@ export async function generateJson({
       output.get(latestVersion),
       await loadUpstream(),
       region,
+      names,
     )
     output.set(latestVersion, result.opcodes)
     logger.log(
@@ -90,11 +97,15 @@ if (
 ) {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { region: { type: 'string', default: 'Global' } },
+    options: {
+      region: { type: 'string', default: 'Global' },
+      names: { type: 'string' },
+    },
   })
   await generateJson({
     inputFile: positionals[0],
     outputDir: positionals[1],
     region: values.region,
+    namesFile: values.names,
   })
 }

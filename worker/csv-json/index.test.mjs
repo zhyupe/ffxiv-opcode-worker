@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { mergeOpcodes } from '../../lib/ffxiv-opcodes.mjs'
+import { loadNames } from '../../lib/names.mjs'
 import { generateJson } from './index.mjs'
 import { mergeHistory } from './merge-history.mjs'
 
@@ -344,5 +345,235 @@ test('failed backfill leaves every output untouched', async (t) => {
   await assert.rejects(
     mergeHistory({ version: '0.0', ref: 'tag', outputDir: f.dir }),
     /Unknown target/,
+  )
+})
+
+test('upstream aliases count as project-name overlaps and never survive output', () => {
+  const result = mergeOpcodes(
+    { CompanyAirshipStatus: '0x000A' },
+    upstream([
+      { name: 'AirshipTimers', opcode: 10 },
+      { name: 'SubmarineTimers', opcode: 11 },
+      { name: 'UnmappedPacket', opcode: 12 },
+    ]),
+  )
+  assert.deepEqual(result.opcodes, {
+    CompanyAirshipStatus: '0x000A',
+    CompanySubmersibleStatus: '0x000B',
+    UnmappedPacket: '0x000C',
+  })
+  assert.equal(result.overlap, 1)
+  assert.equal(result.added, 2)
+  assert.throws(
+    () =>
+      mergeOpcodes(
+        { CompanyAirshipStatus: 10, ActorCast: 20 },
+        upstream([
+          { name: 'AirshipTimers', opcode: 99 },
+          { name: 'ActorCast', opcode: 20 },
+        ]),
+      ),
+    /1\/2.*50% or more/,
+  )
+})
+
+test('event parameter variants retain their distinct names and opcodes', () => {
+  const entries = [
+    { name: 'EventPlay32', opcode: 413 },
+    { name: 'EventPlay64', opcode: 849 },
+    { name: 'ActorCast', opcode: 10 },
+  ]
+  for (const packets of [entries, entries.toReversed()]) {
+    const result = mergeOpcodes({ ActorCast: 10 }, upstream(packets))
+    assert.deepEqual(result.opcodes, {
+      ActorCast: 10,
+      EventPlay32: '0x019D',
+      EventPlay64: '0x0351',
+    })
+    assert.equal(result.added, 2)
+  }
+  const result = mergeOpcodes(
+    { ActorCast: 10 },
+    upstream(entries.filter((entry) => entry.name !== 'EventPlay64')),
+  )
+  assert.deepEqual(result.opcodes, { ActorCast: 10, EventPlay32: '0x019D' })
+})
+
+test('aliases and project-spelled upstream entries are deduplicated or rejected on conflict', () => {
+  const entries = [
+    { name: 'ActorCast', opcode: 10 },
+    { name: 'AirshipTimers', opcode: 11 },
+    { name: 'CompanyAirshipStatus', opcode: 11 },
+  ]
+  const result = mergeOpcodes({ ActorCast: 10 }, upstream(entries))
+  assert.deepEqual(result.opcodes, {
+    ActorCast: 10,
+    CompanyAirshipStatus: '0x000B',
+  })
+  assert.equal(result.added, 1)
+  entries[2].opcode = 12
+  assert.throws(
+    () => mergeOpcodes({ ActorCast: 10 }, upstream(entries)),
+    /conflict for CompanyAirshipStatus/,
+  )
+})
+
+test('retained local aliases collapse to project names with canonical values taking precedence', () => {
+  for (const base of [
+    { ActorCast: 10, AirshipTimers: 99, CompanyAirshipStatus: 11 },
+    { CompanyAirshipStatus: 11, AirshipTimers: 99, ActorCast: 10 },
+  ]) {
+    const result = mergeOpcodes(
+      base,
+      upstream([{ name: 'ActorCast', opcode: 10 }]),
+    )
+    assert.deepEqual(result.opcodes, {
+      ActorCast: 10,
+      CompanyAirshipStatus: 11,
+    })
+    assert.equal(result.added, 0)
+    assert.equal(base.AirshipTimers, 99)
+  }
+  const result = mergeOpcodes(
+    { AirshipTimers: 11 },
+    upstream([{ name: 'AirshipTimers', opcode: 11 }]),
+  )
+  assert.deepEqual(result.opcodes, { CompanyAirshipStatus: 11 })
+  assert.equal(result.overlap, 1)
+})
+
+test('generation normalizes all retained versions even offline, with CSV values winning', async (t) => {
+  const f = fixture(t)
+  writeFileSync(
+    f.inputFile,
+    'Name,7.55,7.56a\nCompanyAirshipStatus,0x0001,0x0002\n',
+  )
+  f.write('7.55.json', { AirshipTimers: 99, SubmarineTimers: 30 })
+  f.write('7.56a.json', {
+    AirshipTimers: 98,
+    CompanyAirshipStatus: 97,
+    SubmarineTimers: 31,
+  })
+  await generateJson({
+    inputFile: f.inputFile,
+    outputDir: f.dir,
+    logger,
+    loadUpstream: async () => {
+      throw new Error('offline')
+    },
+  })
+  assert.deepEqual(f.read('7.55.json'), {
+    CompanyAirshipStatus: '0x0001',
+    CompanySubmersibleStatus: 30,
+  })
+  assert.deepEqual(f.read('7.56a.json'), {
+    CompanyAirshipStatus: '0x0002',
+    CompanySubmersibleStatus: 31,
+  })
+  assert.deepEqual(f.read('current.json'), f.read('7.56a.json'))
+})
+
+test('generation reloads YAML on every invocation and only applies FFXIVOpcodes mappings', async (t) => {
+  const f = fixture(t)
+  const namesFile = join(f.dir, 'names.yaml')
+  for (const alias of ['FirstSource', 'SecondSource']) {
+    writeFileSync(
+      namesFile,
+      `ProjectPacket:\n  FFXIVOpcodes: ${alias}\n  ACT: ActorCast\n  Cactbot: DifferentName\n`,
+    )
+    await generateJson({
+      namesFile,
+      inputFile: f.inputFile,
+      outputDir: f.dir,
+      logger,
+      loadUpstream: async () =>
+        upstream([
+          { name: 'ActorCast', opcode: 10 },
+          { name: alias, opcode: 42 },
+        ]),
+    })
+    const current = f.read('current.json')
+    assert.equal(current.ProjectPacket, '0x002A')
+    assert.equal(current.ActorCast, '0x000a')
+    assert.equal(Object.hasOwn(current, alias), false)
+    assert.equal(Object.hasOwn(current, 'DifferentName'), false)
+  }
+})
+
+test('historical backfill applies runtime mappings to both retained and incoming names', async (t) => {
+  const f = fixture(t)
+  const namesFile = join(f.dir, 'names.yaml')
+  writeFileSync(namesFile, 'ProjectPacket:\n  FFXIVOpcodes: SourcePacket\n')
+  f.write('7.56a.json', { SourcePacket: 10 })
+  const options = {
+    version: '7.56a',
+    ref: 'tag',
+    namesFile,
+    outputDir: f.dir,
+    loadUpstream: async () => upstream([{ name: 'SourcePacket', opcode: 10 }]),
+  }
+  const result = await mergeHistory({ ...options, dryRun: true })
+  assert.deepEqual(result.opcodes, { ProjectPacket: 10 })
+  assert.deepEqual(f.read('7.56a.json'), { SourcePacket: 10 })
+  await mergeHistory(options)
+  assert.deepEqual(f.read('7.56a.json'), { ProjectPacket: 10 })
+  assert.deepEqual(f.read('current.json'), { ProjectPacket: 10 })
+})
+
+test('invalid, ambiguous, or missing name mappings abort before output changes', async (t) => {
+  const f = fixture(t)
+  const namesFile = join(f.dir, 'names.yaml')
+  const files = ['version.json', '7.55.json', '7.56a.json', 'current.json']
+  const before = files.map((name) => readFileSync(join(f.dir, name), 'utf-8'))
+  const inputs = [
+    '',
+    '[]',
+    'Packet: []',
+    'Packet:\n  FFXIVOpcodes: 123\n',
+    'Packet:\n  FFXIVOpcodes: Alias\n  FFXIVOpcodes: Other\n',
+    'First:\n  FFXIVOpcodes: Alias\nSecond:\n  FFXIVOpcodes: Alias\n',
+    'First:\n  FFXIVOpcodes: Second\nSecond:\n  FFXIVOpcodes: Third\n',
+  ]
+  const loadUpstream = async () => {
+    assert.fail('Must not fetch with invalid mappings')
+  }
+  for (const input of inputs) {
+    writeFileSync(namesFile, input)
+    assert.throws(() => loadNames(namesFile))
+    await assert.rejects(
+      generateJson({
+        namesFile,
+        inputFile: f.inputFile,
+        outputDir: f.dir,
+        loadUpstream,
+      }),
+    )
+    await assert.rejects(
+      mergeHistory({
+        namesFile,
+        version: '7.56a',
+        ref: 'tag',
+        outputDir: f.dir,
+        loadUpstream,
+      }),
+    )
+    assert.deepEqual(
+      files.map((name) => readFileSync(join(f.dir, name), 'utf-8')),
+      before,
+    )
+  }
+  rmSync(namesFile)
+  await assert.rejects(
+    generateJson({
+      namesFile,
+      inputFile: f.inputFile,
+      outputDir: f.dir,
+      loadUpstream,
+    }),
+    /ENOENT/,
+  )
+  assert.deepEqual(
+    files.map((name) => readFileSync(join(f.dir, name), 'utf-8')),
+    before,
   )
 })
