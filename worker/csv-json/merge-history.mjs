@@ -7,7 +7,7 @@ import {
   mergeOpcodes,
   serializeOpcodes,
 } from '../../lib/ffxiv-opcodes.mjs'
-import { loadNames } from '../../lib/names.mjs'
+import { loadPackets } from '../../lib/packets.mjs'
 import { versionPattern } from './index.mjs'
 
 export async function mergeHistory({
@@ -15,14 +15,14 @@ export async function mergeHistory({
   ref,
   outputDir = 'json',
   region = 'Global',
-  namesFile,
+  packetsFile,
   dryRun = false,
   loadUpstream = fetchOpcodes,
 }) {
   if (!versionPattern.test(version) || !ref) {
     throw new Error('A target version and an upstream commit/tag are required')
   }
-  const names = loadNames(namesFile)
+  const names = loadPackets(packetsFile)
   const versions = JSON.parse(
     readFileSync(join(outputDir, 'version.json'), 'utf-8'),
   )
@@ -52,12 +52,12 @@ if (
       options: {
         region: { type: 'string', default: 'Global' },
         'dry-run': { type: 'boolean', default: false },
-        names: { type: 'string' },
+        packets: { type: 'string' },
       },
     })
     if (positionals.length < 2 || positionals.length > 3) {
       throw new Error(
-        'Usage: npm run json:merge-history <version> <commit-or-tag> [output-dir] [--region Global] [--names names.yaml] [--dry-run]',
+        'Usage: npm run json:merge-history <version> <commit-or-tag> [output-dir] [--region Global] [--packets packets.yaml] [--dry-run]',
       )
     }
     const result = await mergeHistory({
@@ -65,7 +65,7 @@ if (
       ref: positionals[1],
       outputDir: positionals[2],
       region: values.region,
-      namesFile: values.names,
+      packetsFile: values.packets,
       dryRun: values['dry-run'],
     })
     console.log(

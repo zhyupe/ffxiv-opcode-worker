@@ -28,15 +28,41 @@ with the **Global** entry from
 [FFXIVOpcodes/opcodes.json](https://github.com/karashiiro/FFXIVOpcodes/blob/master/opcodes.json).
 Use `--region CN` to select another region.
 
-Both generation and historical backfill load the repository's `names.yaml` at
-runtime. Its top-level keys are project packet names; `FFXIVOpcodes` values are
-the corresponding upstream names. Incoming names are translated before comparison
-and only project names are written for mapped packets. ACT and Cactbot fields
-are not used for this merge. Names without a mapping retain their spelling.
-Use `--names <path>` to load a different mapping file; the default is resolved
-relative to the project rather than the working directory. Missing or invalid
-mapping files, duplicate YAML keys, and ambiguous upstream aliases abort without
-writing output.
+Both generation and historical backfill load the repository's `packets.yaml` at
+runtime. Top-level keys follow the six IPC categories in
+[FFXIVOpcodes/Ipcs.cs](https://github.com/karashiiro/FFXIVOpcodes/blob/master/FFXIVOpcodes/Ipcs.cs),
+without the `Type` suffix: `ServerZoneIpc`, `ClientZoneIpc`, `ServerLobbyIpc`,
+`ClientLobbyIpc`, `ServerChatIpc`, and `ClientChatIpc`. Each category declares its
+`direction` (`server-to-client` or `client-to-server`) and a `packets` mapping:
+
+```yaml
+ServerZoneIpc:
+  direction: server-to-client
+  packets:
+    ActorCast:
+      ACT: ActorCast
+    CompanyAirshipStatus:
+      FFXIVOpcodes: AirshipTimers
+ClientZoneIpc:
+  direction: client-to-server
+  packets:
+    ActionRequest: {}
+```
+
+Packet keys are project names; their values retain the `FFXIVOpcodes`, `ACT`,
+and `OverlayPlugin` name mappings. Use `{}` for packets without aliases and for empty
+category packet lists. Known categories come from FFXIVOpcodes and CSV `Scope`;
+`UpdateParty` is confirmed by Sapphire's `ServerIpcs.h`. Unclassified historical
+CSV entries are omitted, so consumers leave their direction unspecified.
+
+Only `FFXIVOpcodes` aliases participate in opcode merging. Incoming names are
+translated before comparison and only project names are written for mapped
+packets. Names without a mapping retain their spelling. Metadata stays in YAML;
+the opcode JSON format remains unchanged. Use `--packets <path>` to load another
+catalog; the default path is relative to the project. Missing or invalid catalogs,
+duplicate YAML keys, inconsistent category directions, duplicate packet names
+across categories, and ambiguous aliases abort without writing output. Packet
+names must be unique across categories because the output JSON uses a flat map.
 
 Opcodes are compared numerically after name mapping; hexadecimal case and padding do not matter.
 The entire upstream merge is rejected when **50% or more** of the distinct

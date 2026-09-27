@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { mergeOpcodes } from '../../lib/ffxiv-opcodes.mjs'
-import { loadNames } from '../../lib/names.mjs'
+import { loadPackets, parsePackets } from '../../lib/packets.mjs'
 import { generateJson } from './index.mjs'
 import { mergeHistory } from './merge-history.mjs'
 
@@ -24,6 +24,11 @@ const conflicting = upstream([
   { name: 'ActorCast', opcode: 11 },
 ])
 const logger = { log() {}, warn() {} }
+
+function serverPackets(source) {
+  return 'ServerZoneIpc:\n  direction: server-to-client\n  packets:\n' + source.replace(/^/gm, '    ')
+}
+
 
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), 'ffxiv-opcodes-'))
@@ -475,14 +480,14 @@ test('generation normalizes all retained versions even offline, with CSV values 
 
 test('generation reloads YAML on every invocation and only applies FFXIVOpcodes mappings', async (t) => {
   const f = fixture(t)
-  const namesFile = join(f.dir, 'names.yaml')
+  const packetsFile = join(f.dir, 'packets.yaml')
   for (const alias of ['FirstSource', 'SecondSource']) {
     writeFileSync(
-      namesFile,
-      `ProjectPacket:\n  FFXIVOpcodes: ${alias}\n  ACT: ActorCast\n  Cactbot: DifferentName\n`,
+      packetsFile,
+      serverPackets(`ProjectPacket:\n  FFXIVOpcodes: ${alias}\n  ACT: ActorCast\n  OverlayPlugin: DifferentName\n`),
     )
     await generateJson({
-      namesFile,
+      packetsFile,
       inputFile: f.inputFile,
       outputDir: f.dir,
       logger,
@@ -502,13 +507,13 @@ test('generation reloads YAML on every invocation and only applies FFXIVOpcodes 
 
 test('historical backfill applies runtime mappings to both retained and incoming names', async (t) => {
   const f = fixture(t)
-  const namesFile = join(f.dir, 'names.yaml')
-  writeFileSync(namesFile, 'ProjectPacket:\n  FFXIVOpcodes: SourcePacket\n')
+  const packetsFile = join(f.dir, 'packets.yaml')
+  writeFileSync(packetsFile, serverPackets('ProjectPacket:\n  FFXIVOpcodes: SourcePacket\n'))
   f.write('7.56a.json', { SourcePacket: 10 })
   const options = {
     version: '7.56a',
     ref: 'tag',
-    namesFile,
+    packetsFile,
     outputDir: f.dir,
     loadUpstream: async () => upstream([{ name: 'SourcePacket', opcode: 10 }]),
   }
@@ -522,27 +527,27 @@ test('historical backfill applies runtime mappings to both retained and incoming
 
 test('invalid, ambiguous, or missing name mappings abort before output changes', async (t) => {
   const f = fixture(t)
-  const namesFile = join(f.dir, 'names.yaml')
+  const packetsFile = join(f.dir, 'packets.yaml')
   const files = ['version.json', '7.55.json', '7.56a.json', 'current.json']
   const before = files.map((name) => readFileSync(join(f.dir, name), 'utf-8'))
   const inputs = [
     '',
     '[]',
     'Packet: []',
-    'Packet:\n  FFXIVOpcodes: 123\n',
-    'Packet:\n  FFXIVOpcodes: Alias\n  FFXIVOpcodes: Other\n',
-    'First:\n  FFXIVOpcodes: Alias\nSecond:\n  FFXIVOpcodes: Alias\n',
-    'First:\n  FFXIVOpcodes: Second\nSecond:\n  FFXIVOpcodes: Third\n',
+    serverPackets('Packet:\n  FFXIVOpcodes: 123\n'),
+    serverPackets('Packet:\n  FFXIVOpcodes: Alias\n  FFXIVOpcodes: Other\n'),
+    serverPackets('First:\n  FFXIVOpcodes: Alias\nSecond:\n  FFXIVOpcodes: Alias\n'),
+    serverPackets('First:\n  FFXIVOpcodes: Second\nSecond:\n  FFXIVOpcodes: Third\n'),
   ]
   const loadUpstream = async () => {
     assert.fail('Must not fetch with invalid mappings')
   }
   for (const input of inputs) {
-    writeFileSync(namesFile, input)
-    assert.throws(() => loadNames(namesFile))
+    writeFileSync(packetsFile, input)
+    assert.throws(() => loadPackets(packetsFile))
     await assert.rejects(
       generateJson({
-        namesFile,
+        packetsFile,
         inputFile: f.inputFile,
         outputDir: f.dir,
         loadUpstream,
@@ -550,7 +555,7 @@ test('invalid, ambiguous, or missing name mappings abort before output changes',
     )
     await assert.rejects(
       mergeHistory({
-        namesFile,
+        packetsFile,
         version: '7.56a',
         ref: 'tag',
         outputDir: f.dir,
@@ -562,10 +567,10 @@ test('invalid, ambiguous, or missing name mappings abort before output changes',
       before,
     )
   }
-  rmSync(namesFile)
+  rmSync(packetsFile)
   await assert.rejects(
     generateJson({
-      namesFile,
+      packetsFile,
       inputFile: f.inputFile,
       outputDir: f.dir,
       loadUpstream,
@@ -576,4 +581,40 @@ test('invalid, ambiguous, or missing name mappings abort before output changes',
     files.map((name) => readFileSync(join(f.dir, name), 'utf-8')),
     before,
   )
+})
+
+test('all six IPC categories expose direction and allow packets without aliases', () => {
+  for (const category of ['ServerZoneIpc', 'ClientZoneIpc', 'ServerLobbyIpc', 'ClientLobbyIpc', 'ServerChatIpc', 'ClientChatIpc']) {
+    const direction = category.startsWith('Server') ? 'server-to-client' : 'client-to-server'
+    const { aliases, packets } = parsePackets(JSON.stringify({ [category]: { direction, packets: { KnownPacket: {} } } }))
+    assert.deepEqual(packets.get('KnownPacket'), { category, direction, names: {} })
+    assert.equal(aliases.size, 0)
+  }
+})
+
+test('invalid category metadata and cross-category name collisions are rejected', () => {
+  const server = { direction: 'server-to-client', packets: { First: { FFXIVOpcodes: 'Alias' } } }
+  const client = { direction: 'client-to-server', packets: { Second: {} } }
+  for (const input of [
+    { UnknownIpc: server },
+    { ServerZoneIpc: { ...server, direction: 'client-to-server' } },
+    { ClientZoneIpc: { ...client, direction: 'server-to-client' } },
+    { ServerZoneIpc: { packets: {} } },
+    { ServerZoneIpc: { direction: 'server-to-client', packets: [] } },
+    { ServerZoneIpc: server, ClientZoneIpc: { ...client, packets: { First: {} } } },
+    { ServerZoneIpc: server, ClientZoneIpc: { ...client, packets: { Alias: {} } } },
+    { ServerZoneIpc: server, ClientZoneIpc: { ...client, packets: { Second: { FFXIVOpcodes: 'Alias' } } } },
+  ]) assert.throws(() => parsePackets(JSON.stringify(input)))
+})
+
+test('repository catalog covers current opcodes and distinguishes zone and lobby traffic', () => {
+  const { aliases, packets } = loadPackets()
+  const current = JSON.parse(readFileSync(new URL('../../json/current.json', import.meta.url), 'utf8'))
+  for (const name of Object.keys(current)) assert(packets.has(name), `Missing metadata: ${name}`)
+  assert.equal(aliases.get('DespawnCharacter'), 'ActorFreeSpawn')
+  assert.equal(packets.get('ActorCast').names.ACT, 'ActorCast')
+  assert.equal(packets.get('EnvironmentControl').names.OverlayPlugin, 'MapEffect')
+  assert.equal(packets.get('ActionRequest').direction, 'client-to-server')
+  assert.equal(packets.get('ClientVersionInfo').category, 'ClientLobbyIpc')
+  assert.equal(packets.get('LobbyEnterWorld').category, 'ServerLobbyIpc')
 })

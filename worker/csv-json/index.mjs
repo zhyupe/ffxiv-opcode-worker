@@ -9,7 +9,7 @@ import {
   serializeOpcodes,
   validateOpcodes,
 } from '../../lib/ffxiv-opcodes.mjs'
-import { loadNames, normalizeOpcodeNames } from '../../lib/names.mjs'
+import { loadPackets, normalizeOpcodeNames } from '../../lib/packets.mjs'
 
 export const versionPattern = /^\d+\.\d+(?:[a-z])?$/
 
@@ -26,11 +26,11 @@ export async function generateJson({
   inputFile = 'cn-opcodes.csv',
   outputDir = 'json',
   region = 'Global',
-  namesFile,
+  packetsFile,
   loadUpstream = fetchOpcodes,
   logger = console,
 } = {}) {
-  const names = loadNames(namesFile)
+  const names = loadPackets(packetsFile)
   const rows = parse(readFileSync(inputFile, 'utf-8'), {
     columns: true,
     skip_empty_lines: true,
@@ -99,13 +99,13 @@ if (
     allowPositionals: true,
     options: {
       region: { type: 'string', default: 'Global' },
-      names: { type: 'string' },
+      packets: { type: 'string' },
     },
   })
   await generateJson({
     inputFile: positionals[0],
     outputDir: positionals[1],
     region: values.region,
-    namesFile: values.names,
+    packetsFile: values.packets,
   })
 }
