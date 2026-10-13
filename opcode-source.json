@@ -1,0 +1,10 @@
+{
+  "previousVersion": "7.56a",
+  "sourceVersion": "7.56h",
+  "version": "7.57",
+  "region": "Global",
+  "sharedRegions": ["CN", "KR"],
+  "diffRef": "f6d401145427d672cfad989f3079895388dd1761",
+  "oldUpstreamRef": "38a7415d37512593b36a0ce63b72dfc7807937ba",
+  "newUpstreamRef": "be69b5689e88f503b8665999edc16deb93d8e05e"
+}

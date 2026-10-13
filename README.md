@@ -2,31 +2,69 @@
 
 This repository contains workflows that generate opcode files for different purposes
 
-## About the opcodes
+## Generate a new version from binary opcode differences
 
-存储 opcode 的文件 (cn-opcodes.csv) 是 Google Docs 上一个电子表格的镜像。所有修改都应当在原始文件上进行，请不要向
-该文件提交 PR。
+Requires Node.js 20 or newer. `npm run json` now uses
+[xivdev/opcodediff](https://github.com/xivdev/opcodediff), cross-checked against
+[FFXIVOpcodes](https://github.com/karashiiro/FFXIVOpcodes). It does not download or
+replace `cn-opcodes.csv`. Both locally added packet names and historical JSON are
+preserved; old opcode numbers are never copied blindly into the new version.
 
-如果您认为某个**当前版本**的 opcode 是错误的，或者想要更新对应的 WireShark 过滤器，请提交 Issue 并提供 Wireshark
-的截图（如果 opcode 是通过字节码发现的，请提供 IDA 截图）。请记得抹去截图中如 ID、昵称、账号等敏感信息。由于过期的
-opcode 没有实际用途，历史版本及已公告更新时间的版本将不再接受修正。相关历史版本的 opcode 可能被移除。
+```sh
+npm run json -- --dry-run
+npm run json
+```
 
-The opcodes file (cn-opcodes.csv) is a mirror to a spreadsheet on Google Docs. So any PR to the csv file
-will be closed as they should be updated in the original file.
+Before each release, update `opcode-source.json` with:
 
-If you think any opcode is incorrect in **CURRENT GAME VERSION** or want to update WireShark filters,
-please open an issue. Screenshots of Wireshark (or IDA if you discovered an opcode from bytecode) are
-required. Please remember to erase any sensitive data like your ID, nickname, account, etc. Corrections
-would not be accepted if the correlated game version expired or a new patch is scheduled since old opcodes
-are actually useless and may be removed any time.
+- `previousVersion`: this repository's existing baseline JSON (e.g. `7.56a`).
+- `sourceVersion`: opcodediff's old Global version (e.g. `7.56h`).
+- `version`: the new release (e.g. `7.57`).
+- `diffRef`, `oldUpstreamRef`, `newUpstreamRef`: immutable 40-character commit SHAs.
+- `region`: reference table (Global by default); `sharedRegions`: Zone tables
+  that must agree with it (CN and KR).
 
-## Generate and merge JSON
+The generator verifies the diff's predecessor using opcodediff's version catalog.
+It checks all old local values shared with the old reference and requires at least
+20 server and 5 client baseline anchors. It independently compares diff results
+against the new reference, requiring at least 20 server and 5 client matches and
+zero disagreements. Missing diff entries may use the new reference directly.
+Extra Zone packets use only one-to-one diff mappings. Splits/merges, unknown
+categories and missing non-Zone mappings require review. Lobby/Chat values come
+only from the configured new regional reference or explicit overrides; shared
+Zone tables do not establish cross-region Lobby compatibility.
 
-Requires Node.js 20 or newer. Run `npm run json [input.csv] [output-dir]` (defaults:
-`cn-opcodes.csv` and `json`). The latest CSV version is supplemented at runtime
-with the **Global** entry from
-[FFXIVOpcodes/opcodes.json](https://github.com/karashiiro/FFXIVOpcodes/blob/master/opcodes.json).
-Use `--region CN` to select another region.
+Verified manual additions belong in `overrides/<version>.json`, with categories
+registered in `packets.yaml`. They must not contradict the new community table or
+collide within an IPC category. `InventoryHandlerOffset` is derived from the
+verified `InventoryModifyHandler` value, not treated as a separate packet.
+
+The output is `json/<version>.json`, `json/current.json`, `json/version.json`, plus
+`reports/<version>.json` recording fixed source revisions, build strings, checks
+and per-packet provenance. Historical files are untouched. Unresolved entries are
+shown by `--dry-run`; normal generation refuses to publish them. Network errors,
+wrong baselines and conflicts fail before outputs are written. Existing target
+additions must be represented in overrides before regeneration can remove them.
+The Update opcodes workflow runs tests and this generator; no spreadsheet secret
+is required.
+
+### Validated transition: 7.56a → 7.57
+
+The local baseline agrees with Global 7.56h (`2026.09.15.0000.0000`). The new
+Global, CN and KR Zone tables agree. All 170 known server mappings and 10 client
+mappings match opcodediff; ChatHandler and SetSearchInfoHandler are absent from
+the diff and use the new community table. The old CN reference misnames an
+EventPlay variant, so it is not used as the old baseline. New build:
+`2026.10.06.0000.0000`. Extra migrated packet identities remain binary-diff
+inferences, not a claim of live packet or payload-layout validation.
+
+## Legacy CSV and name mapping
+
+The spreadsheet is an optional legacy source. `npm run json:csv [input.csv]
+[output-dir]` runs the old CSV generator; it refuses to roll the latest published
+version back to an older CSV. Use a separate output directory when rebuilding
+old spreadsheet data. Its optional community merge still uses the historical
+50% conflict heuristic described below; the new binary-diff generator does not.
 
 Both generation and historical backfill load the repository's `packets.yaml` at
 runtime. Top-level keys follow the six IPC categories in
@@ -100,7 +138,6 @@ preserving existing target JSON values on accepted conflicts. Reaching the
 threshold or a download error exits with a nonzero status without writing
 any files. `--dry-run` validates and reports additions and conflicts without
 writing. Backfilling the latest version also updates `current.json`; backfilling
-an older version leaves `current.json` alone. Subsequent `npm run json` runs retain
-the backfilled entries.
+an older version leaves `current.json` alone. Subsequent binary-diff generations leave historical files untouched.
 
 Run the regression tests with `npm run test`.

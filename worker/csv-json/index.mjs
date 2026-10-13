@@ -41,6 +41,12 @@ export async function generateJson({
   const latestVersion = versions.at(-1)
   if (!latestVersion) throw new Error('No opcode versions found in CSV')
 
+  try {
+    const published = JSON.parse(readFileSync(join(outputDir, 'version.json'), 'utf8'))
+    if (published.length && !versions.includes(published.at(-1)))
+      throw new Error('CSV is older than the published version; use npm run json')
+  } catch (error) { if (error.code !== 'ENOENT') throw error }
+
   const output = new Map()
   for (const version of versions) {
     const csvOpcodes = Object.fromEntries(

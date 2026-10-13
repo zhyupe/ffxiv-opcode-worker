@@ -621,3 +621,11 @@ test('repository catalog covers current opcodes and distinguishes zone and lobby
   assert.equal(packets.get('ClientVersionInfo').category, 'ClientLobbyIpc')
   assert.equal(packets.get('LobbyEnterWorld').category, 'ServerLobbyIpc')
 })
+
+test('legacy CSV cannot roll back a newer diff-generated current version', async t => {
+  const f = fixture(t)
+  f.write('version.json', ['7.55', '7.56a', '7.57'])
+  f.write('current.json', { ActorCast: '0x0123' })
+  await assert.rejects(generateJson({ inputFile: f.inputFile, outputDir: f.dir, loadUpstream: async () => matching, logger }), /CSV is older/)
+  assert.deepEqual(f.read('current.json'), { ActorCast: '0x0123' })
+})

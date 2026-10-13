@@ -11,9 +11,10 @@
     "yaml": "^2.9.1"
   },
   "scripts": {
-    "json": "node worker/csv-json/index.mjs",
+    "json": "node worker/opcodediff/index.mjs",
     "json:merge-history": "node worker/csv-json/merge-history.mjs",
-    "test": "node --test"
+    "test": "node --test",
+    "json:csv": "node worker/csv-json/index.mjs"
   },
   "repository": {
     "type": "git",
