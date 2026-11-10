@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseArgs } from 'node:util'
 import { fetchOpcodes, serializeOpcodes } from '../../lib/ffxiv-opcodes.mjs'
+import { fetchCSharpOpcodes } from '../../lib/ffxiv-opcodes-csharp.mjs'
 import { loadPackets } from '../../lib/packets.mjs'
 import { migrate } from '../../lib/opcodediff.mjs'
 
@@ -14,7 +15,7 @@ async function fetchDiffFile(ref, path) {
 }
 export async function generate({ configFile = 'opcode-source.json', outputDir = 'json',
   overridesDir = 'overrides', reportsDir = 'reports', packetsFile, dryRun = false,
-  loadUpstream = fetchOpcodes, loadDiff = fetchDiffFile } = {}) {
+  loadUpstream = fetchOpcodes, loadCSharp = fetchCSharpOpcodes, loadDiff = fetchDiffFile } = {}) {
   const config = read(configFile)
   for (const key of ['diffRef', 'oldUpstreamRef', 'newUpstreamRef'])
     if (!/^[a-f0-9]{40}$/.test(config[key])) throw new Error(`${key} must be a fixed commit SHA`)
@@ -25,21 +26,30 @@ export async function generate({ configFile = 'opcode-source.json', outputDir = 
   if (!Array.isArray(versions) || !versions.includes(config.previousVersion)
     || ![config.previousVersion, config.version].includes(versions.at(-1)))
     throw new Error('Migration must extend the latest published version')
-  const [diff, builds, oldUpstream, newUpstream] = await Promise.all([
-    loadDiff(config.diffRef, `diffs/${config.version}.diff.json`),
+  const diffVersions = config.diffVersions ?? [config.version]
+  if (!Array.isArray(diffVersions) || !diffVersions.length || diffVersions.at(-1) !== config.version
+    || diffVersions.some(version => !/^\d+\.\d+[a-z]*\d*$/.test(version)))
+    throw new Error('Invalid opcode diff versions')
+  if (config.newUpstreamFormat && config.newUpstreamFormat !== 'csharp')
+    throw new Error('Invalid newUpstreamFormat')
+  const [diffs, builds, oldUpstream, newUpstream] = await Promise.all([
+    Promise.all(diffVersions.map(version => loadDiff(config.diffRef, `diffs/${version}.diff.json`))),
     loadDiff(config.diffRef, 'automation/ffxiv_versions_global.json'),
-    loadUpstream(config.oldUpstreamRef), loadUpstream(config.newUpstreamRef),
+    loadUpstream(config.oldUpstreamRef), config.newUpstreamFormat === 'csharp'
+      ? loadCSharp(config.newUpstreamRef, config) : loadUpstream(config.newUpstreamRef),
   ])
-  const index = builds.findIndex(b => b.retail_version === config.version)
-  if (index < 1 || builds[index - 1].retail_version !== config.sourceVersion)
+  const start = builds.findIndex(b => b.retail_version === config.sourceVersion)
+  if (start < 0 || diffVersions.some((version, i) => builds[start + i + 1]?.retail_version !== version))
     throw new Error('Diff predecessor does not match sourceVersion')
+  if (config.binaryVerification && config.binaryVerification.build !== builds[start + diffVersions.length].version_string)
+    throw new Error('Verified executable build does not match target version')
   let overrides = {}
   try { overrides = read(join(overridesDir, `${config.version}.json`)) }
   catch (error) { if (error.code !== 'ENOENT') throw error }
   const result = migrate({ ...config, previous: read(join(outputDir, `${config.previousVersion}.json`)),
-    diff, oldUpstream, newUpstream, names: loadPackets(packetsFile), overrides })
-  const report = { ...config, oldBuild: builds[index - 1].version_string,
-    newBuild: builds[index].version_string, ...result.report }
+    diffs, oldUpstream, newUpstream, names: loadPackets(packetsFile), overrides })
+  const report = { ...config, oldBuild: builds[start].version_string,
+    newBuild: builds[start + diffVersions.length].version_string, ...result.report }
   // All fetching, baseline checks, conflicts and serialization precede output writes.
   const text = serializeOpcodes(result.opcodes)
   if (!dryRun) {

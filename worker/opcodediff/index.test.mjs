@@ -3,7 +3,8 @@ import test from 'node:test'
 import { mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { migrate, parseDiff } from '../../lib/opcodediff.mjs'
+import { composeDiffs, migrate, parseDiff } from '../../lib/opcodediff.mjs'
+import { parseCSharpOpcodes } from '../../lib/ffxiv-opcodes-csharp.mjs'
 import { parsePackets } from '../../lib/packets.mjs'
 import { generate } from './index.mjs'
 
@@ -103,4 +104,76 @@ test('known upstream values fill diff gaps without applying Zone diff to Lobby',
   assert.equal(result.report.provenance.Custom, 'upstream')
   f.newUpstream[0].version = '9.9'
   assert.throws(() => migrate(f), /Unexpected Global version/)
+})
+
+test('composes hotfix diffs without resolving ambiguous or missing intermediate matches', () => {
+  const result = composeDiffs([
+    [{ old: [1], new: [10] }, { old: [2], new: [20, 21] }, { old: [3], new: [30] }],
+    [{ old: [10], new: [100] }, { old: [20], new: [200] }],
+  ])
+  assert.deepEqual([...result], [[1, 100], [2, null], [3, null]])
+  assert.throws(() => composeDiffs([]), /Empty/)
+})
+
+test('reads versioned C# tables while ignoring commented-out packets and rejecting invalid entries', () => {
+  const source = `namespace FFXIVOpcodes.CN {
+    public enum ServerZoneIpcType : ushort {
+      Init = 0x0092, // 7.58
+      // OldInit = 0xFFFF,
+    }
+    public enum ClientZoneIpcType : ushort {
+      ActionRequest = 0x0372, // 7.58
+    }
+    public enum ServerLobbyIpcType : ushort {}
+    public enum ClientLobbyIpcType : ushort {}
+    public enum ServerChatIpcType : ushort {}
+    public enum ClientChatIpcType : ushort {}
+  }`
+  assert.deepEqual(parseCSharpOpcodes(source, 'CN', '7.58').lists.ServerZoneIpcType,
+    [{ name: 'Init', opcode: 146 }])
+  assert.throws(() => parseCSharpOpcodes(source, 'Global', '7.58'), /namespace/)
+  assert.throws(() => parseCSharpOpcodes(source, 'CN', '7.57'), /version/)
+  for (const replacement of ['0x10000', '1 + 2', 'SomeOtherValue'])
+    assert.throws(() => parseCSharpOpcodes(source.replace('0x0092', replacement), 'CN', '7.58'), /Invalid/)
+  assert.throws(() => parseCSharpOpcodes(source.replace('ClientChatIpcType', 'ServerChatIpcType'), 'CN', '7.58'), /duplicate/)
+  assert.throws(() => parseCSharpOpcodes(source.replace('public enum ClientChatIpcType : ushort {}', ''), 'CN', '7.58'), /Missing/)
+})
+
+test('generates across consecutive hotfixes using pinned C# reference tables', async t => {
+  const f = fixture(), dir = mkdtempSync(join(tmpdir(), 'opcode-chain-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  const put = (p, v) => writeFileSync(join(dir, p), JSON.stringify(v))
+  const config = { previousVersion: '1.0a', sourceVersion: '1.0', version: '1.2',
+    diffVersions: ['1.1', '1.2'], newUpstreamFormat: 'csharp',
+    diffRef: 'a'.repeat(40), oldUpstreamRef: 'b'.repeat(40), newUpstreamRef: 'c'.repeat(40) }
+  put('config.json', config); put('version.json', ['1.0a']); put('1.0a.json', f.previous)
+  writeFileSync(join(dir, 'packets.yaml'), f.yaml)
+  const nextDiff = f.diff.map(row => ({ old: row.new, new: row.new.map(n => n + 1000) }))
+  for (const region of f.newUpstream) {
+    region.version = '1.2'
+    for (const entries of Object.values(region.lists)) for (const row of entries) row.opcode += 1000
+  }
+  let csharpCalls = 0
+  const options = { configFile: join(dir, 'config.json'), outputDir: dir, reportsDir: join(dir, 'reports'),
+    overridesDir: join(dir, 'overrides'), packetsFile: join(dir, 'packets.yaml'),
+    loadUpstream: async ref => { assert.equal(ref, config.oldUpstreamRef); return f.oldUpstream },
+    loadCSharp: async (ref, options) => {
+      assert.equal(ref, config.newUpstreamRef); assert.equal(options.version, '1.2'); csharpCalls++
+      return f.newUpstream
+    },
+    loadDiff: async (_, p) => p === 'diffs/1.1.diff.json' ? f.diff : p === 'diffs/1.2.diff.json' ? nextDiff
+      : ['1.0', '1.1', '1.2'].map((retail_version, i) => ({ retail_version, version_string: `build-${i}` })),
+  }
+  const result = await generate(options)
+  assert.equal(result.opcodes.Custom, '0x08FC')
+  assert.equal(result.report.oldBuild, 'build-0')
+  assert.equal(result.report.newBuild, 'build-2')
+  assert.equal(csharpCalls, 1)
+  const current = readFileSync(join(dir, 'current.json'), 'utf8')
+  put('config.json', { ...config, diffVersions: ['1.2'] })
+  await assert.rejects(generate(options), /predecessor/)
+  assert.equal(readFileSync(join(dir, 'current.json'), 'utf8'), current)
+  put('config.json', { ...config, binaryVerification: { build: 'wrong-build' } })
+  await assert.rejects(generate(options), /executable build/)
+  assert.equal(readFileSync(join(dir, 'current.json'), 'utf8'), current)
 })

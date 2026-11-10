@@ -23,6 +23,9 @@ Before each release, update `opcode-source.json` with:
 - `diffRef`, `oldUpstreamRef`, `newUpstreamRef`: immutable 40-character commit SHAs.
 - `region`: reference table (Global by default); `sharedRegions`: Zone tables
   that must agree with it (CN and KR).
+- `diffVersions`: consecutive target versions when the baseline skips hotfixes.
+- `newUpstreamFormat`: `csharp` to read versioned source tables before upstream
+  refreshes its generated `opcodes.json`.
 
 The generator verifies the diff's predecessor using opcodediff's version catalog.
 It checks all old local values shared with the old reference and requires at least
@@ -48,15 +51,17 @@ additions must be represented in overrides before regeneration can remove them.
 The Update opcodes workflow runs tests and this generator; no spreadsheet secret
 is required.
 
-### Validated transition: 7.56a → 7.57
+### Validated transition: 7.57 → 7.58
 
-The local baseline agrees with Global 7.56h (`2026.09.15.0000.0000`). The new
-Global, CN and KR Zone tables agree. All 170 known server mappings and 10 client
-mappings match opcodediff; ChatHandler and SetSearchInfoHandler are absent from
-the diff and use the new community table. The old CN reference misnames an
-EventPlay variant, so it is not used as the old baseline. New build:
-`2026.10.06.0000.0000`. Extra migrated packet identities remain binary-diff
-inferences, not a claim of live packet or payload-layout validation.
+The migration composes the 7.57h and 7.58 diffs. All 170 known server mappings
+and 10 client mappings match the pinned C# tables; Global, CN and KR Zone tables
+agree. ChatHandler and SetSearchInfoHandler use the new community table.
+
+The SDO `2026.11.03.0000.0000` release executable independently matches all 775
+dispatcher vtable slots in the 7.58 diff, covering 201 named Zone opcodes. Release
+and executable hashes are recorded in `reports/7.58.json`. Lobby values retain
+their Global reference. Packet identities remain binary-diff inferences without
+live packet or payload-layout validation.
 
 ## Legacy CSV and name mapping
 
